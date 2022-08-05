@@ -3,6 +3,7 @@ package reonomydmsource
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/catalystsquad/app-utils-go/logging"
 	"github.com/joomcode/errorx"
 	"net/http"
 )
@@ -25,15 +26,14 @@ func (s *ReonomySource) getPropertyBulk(IDs []string) (properties []map[string]i
 		return
 	}
 
-	req := createPostRequest(s.getPropertyBulkPath(), reqBody)
-
-	body, statusCode, requestErr := s.sendRequestHandleRateLimit(req)
+	logging.Log.Debug("sending bulk api request")
+	body, statusCode, requestErr := s.doPostRequestHandleRateLimit(s.getPropertyBulkPath(), reqBody, 30, 3)
 	if requestErr != nil {
 		err = requestErr
 		return
 	}
 	if statusCode != http.StatusOK {
-		err = errorx.Decorate(err, "unexpected status code: %d with body: %s", statusCode, body)
+		err = errorx.Decorate(err, "unexpected status code from bulk api request: %d with body: %s", statusCode, body)
 		return
 	}
 

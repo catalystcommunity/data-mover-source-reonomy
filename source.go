@@ -31,7 +31,7 @@ type ReonomySource struct {
 	// we only support a single thread communicating to the summary api due to limitations of reonomy's pagination
 	summaryMu sync.Mutex
 	// used by the GetData function to keep track of results from the summary query
-	summarySearchToken *string
+	summarySearchToken string
 	// keeps track of when the summary search token returns empty
 	summarySearchComplete bool
 }
@@ -71,6 +71,10 @@ func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
 
 	propertyIDs, err := s.getSummaryIDs()
 	if err != nil {
+		return
+	}
+	// return if there were no property ids in the summary response
+	if len(propertyIDs) == 0 {
 		return
 	}
 

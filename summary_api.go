@@ -3,6 +3,7 @@ package reonomydmsource
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/catalystsquad/app-utils-go/logging"
 	"github.com/joomcode/errorx"
 	"net/http"
 	"net/url"
@@ -16,6 +17,7 @@ type summaryBody struct {
 type summaryResponse struct {
 	// the summary response has many return fields that we don't currently use, so we only specify the ones we need to unmarshal
 	SearchToken string `json:"search_token"`
+	Count       int    `json:"count"`
 	Items       []struct {
 		ID string `json:"id"`
 	} `json:"items"`
@@ -36,15 +38,14 @@ func (s *ReonomySource) getSummaryIDs() (IDs []string, err error) {
 		return
 	}
 
-	req := createPostRequest(s.getSummarySearchTokenURL(), reqBody)
-
-	body, statusCode, requestErr := s.sendRequestHandleRateLimit(req)
+	logging.Log.Debug("sending summary api request")
+	body, statusCode, requestErr := s.doPostRequestHandleRateLimit(s.getSummarySearchTokenURL(), reqBody, 1, 5)
 	if requestErr != nil {
 		err = requestErr
 		return
 	}
 	if statusCode != http.StatusOK {
-		err = errorx.Decorate(err, "unexpected status code: %d with body: %s", statusCode, body)
+		err = errorx.Decorate(err, "unexpected status code from summary api request: %d with body: %s", statusCode, body)
 		return
 	}
 
@@ -54,8 +55,10 @@ func (s *ReonomySource) getSummaryIDs() (IDs []string, err error) {
 		return
 	}
 
+	logging.Log.Debug(fmt.Sprintf("got response: %#v", response))
+
 	// save the search token for future executions
-	*s.summarySearchToken = response.SearchToken
+	s.summarySearchToken = response.SearchToken
 	// set summarySearchComplete to true when the search token is empty, because there should be no more results to query
 	if response.SearchToken == "" {
 		s.summarySearchComplete = true
@@ -72,10 +75,10 @@ func (s *ReonomySource) getSummaryURL() string {
 }
 
 func (s *ReonomySource) getSummarySearchTokenURL() string {
-	if s.summarySearchToken != nil {
+	if s.summarySearchToken != "" {
 		// url encode the query
 		params := url.Values{}
-		params.Add("search_token", *s.summarySearchToken)
+		params.Add("search_token", s.summarySearchToken)
 		return fmt.Sprintf("%s?%s", s.getSummaryURL(), params.Encode())
 	}
 	return s.getSummaryURL()
