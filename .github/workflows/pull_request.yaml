@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: crazy-max/ghaction-dump-context@v1
-      - name: Test
-        uses: catalystsquad/action-test-go@v1
-        with:
-          pre-command: git config --global url."https://${{ secrets.AUTOMATION_PAT }}@github.com".insteadOf "https://github.com"
+      # - name: Test
+      #   uses: catalystsquad/action-test-go@v1
+      #   with:
+      #     pre-command: git config --global url."https://${{ secrets.AUTOMATION_PAT }}@github.com".insteadOf "https://github.com"
