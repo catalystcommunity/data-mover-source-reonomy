@@ -16,39 +16,47 @@ type ReonomySource struct {
 	SecretKey string
 	BaseURL   string
 
-	// summary query to filter properties
-	SummaryQuery map[string]interface{}
+	// summary queries to filter properties
+	SummaryQueries []map[string]interface{}
 	// limit of how many properties to retrieve per API call
 	SummaryLimit int
-	// property detail types. Valid types are basic, mortgages, ownership, reported_owner, sales, taxes, and tenants.
+	// property detail types. Valid types are basic, mortgages, ownership,
+	// reported_owner, sales, taxes, and tenants.
 	PropertyDetailTypes []string
 	// whether to supply the filter_pii to the property bulk API endpoint
 	FilterPII bool
 
-	// the access key and secret key combined and encoded in base64 for use in basic auth
+	// the access key and secret key combined and encoded in base64 for use in
+	// basic auth
 	apiToken string
-	// sync mutex to ensure that only one worker ever queries the summary api at a time
-	// we only support a single thread communicating to the summary api due to limitations of reonomy's pagination
+	// query index keeps track of which element of the queries we are on
+	queryIndex int
+	// sync mutex to ensure that only one worker ever queries the summary api
+	// at a time we only support a single thread communicating to the summary
+	// api due to limitations of reonomy's pagination
 	summaryMu sync.Mutex
-	// used by the GetData function to keep track of results from the summary query
+	// used by the GetData function to keep track of results from the summary
+	// query
 	summarySearchToken string
-	// keeps track of when the summary search token returns empty
-	summarySearchComplete bool
 }
 
-// NewReonomySource initializes a ReonomySource struct for use by the data-mover-core. The accessKey and secretKey are
-// used for basic authentication to the API.
-// The query parameter is used to filter which properties to return. The query is passed into the "settings" field in
-// the body of a summaries search.
+// NewReonomySource initializes a ReonomySource struct for use by the
+// data-mover-core. The accessKey and secretKey are used for basic
+// authentication to the API.
+//
+// The query parameter is used to filter which properties to return. The query
+// is passed into the "settings" field in the body of a summaries search.
 // Ref: https://api.reonomy.com/v2/docs/guides/search/#filtered-search.
-// The detailTypes parameter must be one of basic, mortgages, ownership, reported_owner, sales, taxes, and tenants.
+//
+// The detailTypes parameter must be one of:
+// basic, mortgages, ownership, reported_owner, sales, taxes, and tenants.
 // Ref: https://api.reonomy.com/v2/docs/api/data-dictionary/
-func NewReonomySource(accessKey string, secretKey string, query map[string]interface{}, propertyDetailTypes []string, filterPII bool, summaryLimit int) *ReonomySource {
+func NewReonomySource(accessKey string, secretKey string, queries []map[string]interface{}, propertyDetailTypes []string, filterPII bool, summaryLimit int) *ReonomySource {
 	return &ReonomySource{
 		AccessKey:           accessKey,
 		SecretKey:           secretKey,
 		BaseURL:             reonomyBaseURL,
-		SummaryQuery:        query,
+		SummaryQueries:      queries,
 		PropertyDetailTypes: propertyDetailTypes,
 		FilterPII:           filterPII,
 		SummaryLimit:        summaryLimit,
@@ -58,24 +66,45 @@ func NewReonomySource(accessKey string, secretKey string, query map[string]inter
 // Initialize is the implementation of the Initialize interface for the data-mover-core
 func (s *ReonomySource) Initialize() error {
 	s.apiToken = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", s.AccessKey, s.SecretKey)))
-	s.summarySearchComplete = false
+	s.queryIndex = 0
 	return nil
 }
 
 // GetData is the implementation of the GetData interface for the data-mover-core
 func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
-	// return empty data when we've exhausted the last of the search tokens
-	if s.summarySearchComplete {
+	if s.queryIndex >= len(s.SummaryQueries) {
+		// return empty data when we've exhausted all queries
 		return
 	}
 
-	propertyIDs, err := s.getSummaryIDs()
-	if err != nil {
-		return
-	}
-	// return if there were no property ids in the summary response
-	if len(propertyIDs) == 0 {
-		return
+	var propertyIDs []string
+	// loop until we get a summary query that returns with property IDs
+	for {
+		// get propertyIDs from current query
+		propertyIDs, err = s.getSummaryIDs(s.SummaryQueries[s.queryIndex])
+		if err != nil {
+			return
+		}
+
+		if len(propertyIDs) > 0 {
+			// iterate the query index if there was no search token in the last
+			// summary response
+			if s.summarySearchToken == "" {
+				s.queryIndex++
+			}
+			// break the loop when we get property IDs returned
+			break
+		}
+
+		// iterate the queryIndex if we don't get property IDs
+		s.queryIndex++
+		// reset search token, incase reonomy gave us one even though it didn't
+		// return with any data
+		s.summarySearchToken = ""
+		if s.queryIndex >= len(s.SummaryQueries) {
+			// return empty data when we've exhausted all queries
+			return
+		}
 	}
 
 	data, err = s.getPropertyBulk(propertyIDs)

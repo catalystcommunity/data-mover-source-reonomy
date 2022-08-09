@@ -3,10 +3,11 @@ package reonomydmsource
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/catalystsquad/app-utils-go/logging"
-	"github.com/joomcode/errorx"
 	"net/http"
 	"net/url"
+
+	"github.com/catalystsquad/app-utils-go/logging"
+	"github.com/joomcode/errorx"
 )
 
 type summaryBody struct {
@@ -15,7 +16,8 @@ type summaryBody struct {
 }
 
 type summaryResponse struct {
-	// the summary response has many return fields that we don't currently use, so we only specify the ones we need to unmarshal
+	// the summary response has many return fields that we don't currently use,
+	// so we only specify the ones we need to unmarshal
 	SearchToken string `json:"search_token"`
 	Count       int    `json:"count"`
 	Items       []struct {
@@ -23,17 +25,17 @@ type summaryResponse struct {
 	} `json:"items"`
 }
 
-func (s *ReonomySource) getSummaryIDs() (IDs []string, err error) {
+func (s *ReonomySource) getSummaryIDs(query map[string]interface{}) (ids []string, err error) {
 	// lock the mutex to ensure only one thread ever queries the summary endpoint
 	s.summaryMu.Lock()
 	defer s.summaryMu.Unlock()
 
-	query := summaryBody{
+	summaryBody := summaryBody{
 		Limit:    s.SummaryLimit,
-		Settings: s.SummaryQuery,
+		Settings: query,
 	}
 
-	reqBody, err := json.Marshal(query)
+	reqBody, err := json.Marshal(summaryBody)
 	if err != nil {
 		return
 	}
@@ -55,17 +57,13 @@ func (s *ReonomySource) getSummaryIDs() (IDs []string, err error) {
 		return
 	}
 
-	logging.Log.Debug(fmt.Sprintf("got response: %#v", response))
+	logging.Log.Debugf("got response: %#v", response)
 
 	// save the search token for future executions
 	s.summarySearchToken = response.SearchToken
-	// set summarySearchComplete to true when the search token is empty, because there should be no more results to query
-	if response.SearchToken == "" {
-		s.summarySearchComplete = true
-	}
 
 	for _, i := range response.Items {
-		IDs = append(IDs, i.ID)
+		ids = append(ids, i.ID)
 	}
 	return
 }

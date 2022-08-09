@@ -3,9 +3,10 @@ package reonomydmsource
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/catalystsquad/app-utils-go/logging"
 	"github.com/joomcode/errorx"
-	"net/http"
 )
 
 type propertyBulkBody struct {
@@ -38,6 +39,7 @@ func (s *ReonomySource) getPropertyBulk(IDs []string) (properties []map[string]i
 	}
 
 	err = json.Unmarshal(body, &properties)
+	logging.Log.Debugf("got %d properties", len(properties))
 	return
 }
 
