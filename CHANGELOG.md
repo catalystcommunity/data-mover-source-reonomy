@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/catalystsquad/data-mover-source-reonomy/compare/v1.0.0...v1.1.0) (2023-09-22)
+
+
+### Features
+
+* upgrade go version, handle all http errors not just 429s ([#6](https://github.com/catalystsquad/data-mover-source-reonomy/issues/6)) ([b600415](https://github.com/catalystsquad/data-mover-source-reonomy/commit/b60041552ee85a34cdecb78c39d44b2f4fe8b087))
+
 # 1.0.0 (2022-08-09)
 
 
