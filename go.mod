@@ -1,6 +1,6 @@
 module github.com/catalystsquad/data-mover-source-reonomy
 
-go 1.18
+go 1.20
 
 require (
 	github.com/catalystsquad/app-utils-go v1.0.5
