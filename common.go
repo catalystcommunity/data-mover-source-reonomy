@@ -2,10 +2,11 @@ package reonomydmsource
 
 import (
 	"fmt"
-	"github.com/catalystsquad/app-utils-go/logging"
-	"github.com/valyala/fasthttp"
 	"net/http"
 	"time"
+
+	"github.com/catalystsquad/app-utils-go/logging"
+	"github.com/valyala/fasthttp"
 )
 
 func (s *ReonomySource) doPostRequest(uri string, reqBody []byte) (respBody []byte, statusCode int, err error) {
@@ -25,13 +26,18 @@ func (s *ReonomySource) doPostRequest(uri string, reqBody []byte) (respBody []by
 func (s *ReonomySource) doPostRequestHandleRateLimit(uri string, reqBody []byte, backoffDurationSeconds int, maxAttempts int) (respBody []byte, statusCode int, err error) {
 	for i := 0; i < maxAttempts; i++ {
 		respBody, statusCode, err = s.doPostRequest(uri, reqBody)
-		if statusCode != http.StatusTooManyRequests {
-			return
+		if err == nil && statusCode == http.StatusOK {
+			return respBody, statusCode, nil
 		}
-		logging.Log.Info(fmt.Sprintf("received HTTP 429 response, backing off for %d second...", backoffDurationSeconds))
-		logging.Log.Debug(fmt.Sprintf("429 response body: %s", string(respBody)))
-		time.Sleep(time.Second * time.Duration(backoffDurationSeconds))
-		logging.Log.Info("retrying request...")
+
+		logging.Log.WithError(err).Errorf("attempt %d received HTTP %d response", i, statusCode)
+		if i < maxAttempts-1 { // don't sleep if this is the last attempt
+			logging.Log.Infof("backing off for %d seconds", backoffDurationSeconds)
+			logging.Log.Debugf("error response body: %s", string(respBody))
+			time.Sleep(time.Second * time.Duration(backoffDurationSeconds))
+			logging.Log.Info("retrying request")
+		}
 	}
-	return
+	err = fmt.Errorf("max attempts reached, aborting request")
+	return nil, statusCode, err
 }

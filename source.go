@@ -74,7 +74,7 @@ func (s *ReonomySource) Initialize() error {
 func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
 	if s.queryIndex >= len(s.SummaryQueries) {
 		// return empty data when we've exhausted all queries
-		return
+		return data, nil
 	}
 
 	var propertyIDs []string
@@ -83,7 +83,7 @@ func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
 		// get propertyIDs from current query
 		propertyIDs, err = s.getSummaryIDs(s.SummaryQueries[s.queryIndex])
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		if len(propertyIDs) > 0 {
@@ -103,10 +103,9 @@ func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
 		s.summarySearchToken = ""
 		if s.queryIndex >= len(s.SummaryQueries) {
 			// return empty data when we've exhausted all queries
-			return
+			return data, nil
 		}
 	}
 
-	data, err = s.getPropertyBulk(propertyIDs)
-	return
+	return s.getPropertyBulk(propertyIDs)
 }
