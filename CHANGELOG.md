@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/catalystsquad/data-mover-source-reonomy/compare/v1.1.0...v1.2.0) (2024-03-07)
+
+
+### Features
+
+* add retries around the http function calls ([#7](https://github.com/catalystsquad/data-mover-source-reonomy/issues/7)) ([b6e44a2](https://github.com/catalystsquad/data-mover-source-reonomy/commit/b6e44a28aede9f90ed754a63f8a8e6f36587f60f))
+
 # [1.1.0](https://github.com/catalystsquad/data-mover-source-reonomy/compare/v1.0.0...v1.1.0) (2023-09-22)
 
 
