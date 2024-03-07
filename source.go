@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"sync"
+
+	"github.com/catalystsquad/app-utils-go/logging"
 )
 
 const reonomyBaseURL = "https://api.reonomy.com"
@@ -25,6 +27,8 @@ type ReonomySource struct {
 	PropertyDetailTypes []string
 	// whether to supply the filter_pii to the property bulk API endpoint
 	FilterPII bool
+	// the number of times to retry a request if it fails
+	RetryCount int
 
 	// the access key and secret key combined and encoded in base64 for use in
 	// basic auth
@@ -81,7 +85,15 @@ func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
 	// loop until we get a summary query that returns with property IDs
 	for {
 		// get propertyIDs from current query
-		propertyIDs, err = s.getSummaryIDs(s.SummaryQueries[s.queryIndex])
+		for i := 0; i <= s.RetryCount; i++ {
+			propertyIDs, err = s.getSummaryIDs(s.SummaryQueries[s.queryIndex])
+			if err != nil {
+				logging.Log.WithError(err).Error("error getting summary IDs")
+				continue // retry
+			}
+		}
+		// if we made it out of the loop with an error, then we've exhausted
+		// the retries and should fail.
 		if err != nil {
 			return nil, err
 		}
@@ -107,5 +119,13 @@ func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
 		}
 	}
 
-	return s.getPropertyBulk(propertyIDs)
+	for i := 0; i <= s.RetryCount; i++ {
+		data, err = s.getPropertyBulk(propertyIDs)
+		if err != nil {
+			logging.Log.WithError(err).Error("error getting bulk properties")
+			continue // retry
+		}
+		return data, nil
+	}
+	return nil, err
 }
