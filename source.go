@@ -88,10 +88,10 @@ func (s *ReonomySource) GetData() (data []map[string]interface{}, err error) {
 		// get propertyIDs from current query
 		for i := 0; i <= s.RetryCount; i++ {
 			propertyIDs, err = s.getSummaryIDs(s.SummaryQueries[s.queryIndex])
-			if err != nil {
-				logging.Log.WithError(err).Error("error getting summary IDs")
-				continue // retry
+			if err == nil {
+				break
 			}
+			logging.Log.WithError(err).Error("error getting summary IDs")
 		}
 		// if we made it out of the loop with an error, then we've exhausted
 		// the retries and should fail.
