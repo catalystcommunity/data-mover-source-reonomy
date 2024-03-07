@@ -55,7 +55,7 @@ type ReonomySource struct {
 // The detailTypes parameter must be one of:
 // basic, mortgages, ownership, reported_owner, sales, taxes, and tenants.
 // Ref: https://api.reonomy.com/v2/docs/api/data-dictionary/
-func NewReonomySource(accessKey string, secretKey string, queries []map[string]interface{}, propertyDetailTypes []string, filterPII bool, summaryLimit int) *ReonomySource {
+func NewReonomySource(accessKey string, secretKey string, queries []map[string]interface{}, propertyDetailTypes []string, filterPII bool, summaryLimit int, retryCount int) *ReonomySource {
 	return &ReonomySource{
 		AccessKey:           accessKey,
 		SecretKey:           secretKey,
@@ -64,6 +64,7 @@ func NewReonomySource(accessKey string, secretKey string, queries []map[string]i
 		PropertyDetailTypes: propertyDetailTypes,
 		FilterPII:           filterPII,
 		SummaryLimit:        summaryLimit,
+		RetryCount:          retryCount,
 	}
 }
 
