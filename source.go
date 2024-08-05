@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/catalystsquad/app-utils-go/logging"
+	"github.com/catalystcommunity/app-utils-go/logging"
 )
 
 const reonomyBaseURL = "https://api.reonomy.com"

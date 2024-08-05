@@ -1,9 +1,9 @@
-module github.com/catalystsquad/data-mover-source-reonomy
+module github.com/catalystcommunity/data-mover-source-reonomy
 
 go 1.21
 
 require (
-	github.com/catalystsquad/app-utils-go v1.0.5
+	github.com/catalystcommunity/app-utils-go v1.0.5
 	github.com/joomcode/errorx v1.1.0
 	github.com/valyala/fasthttp v1.38.0
 )

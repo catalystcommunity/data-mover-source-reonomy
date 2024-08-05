@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/catalystsquad/app-utils-go/logging"
+	"github.com/catalystcommunity/app-utils-go/logging"
 	"github.com/valyala/fasthttp"
 )
 
