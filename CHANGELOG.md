@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/catalystcommunity/data-mover-source-reonomy/compare/v1.2.0...v1.2.1) (2024-11-08)
+
+
+### Bug Fixes
+
+* move to catalystcommunity ([f156833](https://github.com/catalystcommunity/data-mover-source-reonomy/commit/f156833e158b95277e29c4781af160f768f49e3b))
+* update catalystcommunity dependency version ([#8](https://github.com/catalystcommunity/data-mover-source-reonomy/issues/8)) ([1f5ac4b](https://github.com/catalystcommunity/data-mover-source-reonomy/commit/1f5ac4bfd8f9bab182eccb8ac2e85fc4689b4aa3))
+
 # [1.2.0](https://github.com/catalystcommunity/data-mover-source-reonomy/compare/v1.1.0...v1.2.0) (2024-03-07)
 
 
